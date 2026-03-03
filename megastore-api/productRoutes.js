@@ -1,12 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const productController = require('./productController');
+const ctrl = require('./productController');
 
-// CRUD completo de Products
-router.get('/', productController.getAllProducts);        // GET /api/products
-router.get('/:id', productController.getProductById);     // GET /api/products/:id
-router.post('/', productController.createProduct);        // POST /api/products
-router.put('/:id', productController.updateProduct);      // PUT /api/products/:id
-router.delete('/:id', productController.deleteProduct);   // DELETE /api/products/:id
+router.get('/', ctrl.getAllProducts);
+router.get('/:id', ctrl.getProductById);
+router.post('/', ctrl.createProduct);
+router.put('/:id', ctrl.updateProduct);
+router.delete('/:id', ctrl.deleteProduct);
 
 module.exports = router;

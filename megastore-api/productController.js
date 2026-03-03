@@ -1,6 +1,5 @@
 const db = require('./db-mysql');
 
-// GET /api/products - Obtener todos los productos (con JOIN a Categories y Suppliers)
 exports.getAllProducts = async (req, res) => {
     try {
         const [rows] = await db.query(`
@@ -19,7 +18,6 @@ exports.getAllProducts = async (req, res) => {
     }
 };
 
-// GET /api/products/:id - Obtener un producto por ID
 exports.getProductById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -41,7 +39,6 @@ exports.getProductById = async (req, res) => {
     }
 };
 
-// POST /api/products - Crear un nuevo producto
 exports.createProduct = async (req, res) => {
     try {
         const { sku, name, price, category_id, supplier_id } = req.body;
@@ -65,7 +62,6 @@ exports.createProduct = async (req, res) => {
     }
 };
 
-// PUT /api/products/:id - Actualizar un producto existente
 exports.updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
@@ -93,21 +89,17 @@ exports.updateProduct = async (req, res) => {
     }
 };
 
-// DELETE /api/products/:id - Eliminar un producto
 exports.deleteProduct = async (req, res) => {
     try {
         const { id } = req.params;
-
         const [rows] = await db.query('SELECT * FROM Products WHERE id = ?', [id]);
 
         if (rows.length === 0) return res.status(404).json({ error: 'Producto no encontrado' });
 
-        const productData = rows[0];
-        console.log("LOG - Eliminando Producto:", productData);
-
+        console.log("LOG - Eliminando Producto:", rows[0]);
         await db.query('DELETE FROM Products WHERE id = ?', [id]);
 
-        res.json({ message: 'Producto eliminado exitosamente', deleted: productData });
+        res.json({ message: 'Producto eliminado exitosamente', deleted: rows[0] });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Error al eliminar el producto' });

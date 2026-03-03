@@ -1,6 +1,5 @@
 const db = require('./db-mysql');
 
-// GET /api/suppliers - Obtener todos los proveedores
 exports.getAllSuppliers = async (req, res) => {
     try {
         const [rows] = await db.query('SELECT * FROM Suppliers ORDER BY id');
@@ -11,7 +10,6 @@ exports.getAllSuppliers = async (req, res) => {
     }
 };
 
-// GET /api/suppliers/:id - Obtener un proveedor por ID
 exports.getSupplierById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -25,7 +23,6 @@ exports.getSupplierById = async (req, res) => {
     }
 };
 
-// POST /api/suppliers - Crear un nuevo proveedor
 exports.createSupplier = async (req, res) => {
     try {
         const { name, email } = req.body;
@@ -45,7 +42,6 @@ exports.createSupplier = async (req, res) => {
     }
 };
 
-// PUT /api/suppliers/:id - Actualizar un proveedor
 exports.updateSupplier = async (req, res) => {
     try {
         const { id } = req.params;
@@ -69,11 +65,9 @@ exports.updateSupplier = async (req, res) => {
     }
 };
 
-// DELETE /api/suppliers/:id - Eliminar un proveedor
 exports.deleteSupplier = async (req, res) => {
     try {
         const { id } = req.params;
-
         const [rows] = await db.query('SELECT * FROM Suppliers WHERE id = ?', [id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Proveedor no encontrado' });
 

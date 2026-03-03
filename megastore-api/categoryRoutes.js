@@ -1,12 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const categoryController = require('./categoryController');
+const ctrl = require('./categoryController');
 
-// CRUD completo de Categories
-router.get('/', categoryController.getAllCategories);        // GET /api/categories
-router.get('/:id', categoryController.getCategoryById);      // GET /api/categories/:id
-router.post('/', categoryController.createCategory);         // POST /api/categories
-router.put('/:id', categoryController.updateCategory);       // PUT /api/categories/:id
-router.delete('/:id', categoryController.deleteCategory);    // DELETE /api/categories/:id
+router.get('/', ctrl.getAllCategories);
+router.get('/:id', ctrl.getCategoryById);
+router.post('/', ctrl.createCategory);
+router.put('/:id', ctrl.updateCategory);
+router.delete('/:id', ctrl.deleteCategory);
 
 module.exports = router;

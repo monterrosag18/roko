@@ -1,6 +1,5 @@
 const db = require('./db-mysql');
 
-// GET /api/categories - Obtener todas las categorías
 exports.getAllCategories = async (req, res) => {
     try {
         const [rows] = await db.query('SELECT * FROM Categories ORDER BY id');
@@ -11,7 +10,6 @@ exports.getAllCategories = async (req, res) => {
     }
 };
 
-// GET /api/categories/:id - Obtener una categoría por ID
 exports.getCategoryById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -25,7 +23,6 @@ exports.getCategoryById = async (req, res) => {
     }
 };
 
-// POST /api/categories - Crear una nueva categoría
 exports.createCategory = async (req, res) => {
     try {
         const { name } = req.body;
@@ -45,7 +42,6 @@ exports.createCategory = async (req, res) => {
     }
 };
 
-// PUT /api/categories/:id - Actualizar una categoría
 exports.updateCategory = async (req, res) => {
     try {
         const { id } = req.params;
@@ -69,11 +65,9 @@ exports.updateCategory = async (req, res) => {
     }
 };
 
-// DELETE /api/categories/:id - Eliminar una categoría
 exports.deleteCategory = async (req, res) => {
     try {
         const { id } = req.params;
-
         const [rows] = await db.query('SELECT * FROM Categories WHERE id = ?', [id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Categoría no encontrada' });
 

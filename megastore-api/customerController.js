@@ -1,6 +1,5 @@
 const db = require('./db-mysql');
 
-// GET /api/customers - Obtener todos los clientes
 exports.getAllCustomers = async (req, res) => {
     try {
         const [rows] = await db.query('SELECT * FROM Customers ORDER BY id');
@@ -11,7 +10,6 @@ exports.getAllCustomers = async (req, res) => {
     }
 };
 
-// GET /api/customers/:id - Obtener un cliente por ID
 exports.getCustomerById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -25,7 +23,6 @@ exports.getCustomerById = async (req, res) => {
     }
 };
 
-// POST /api/customers - Crear un nuevo cliente
 exports.createCustomer = async (req, res) => {
     try {
         const { full_name, email, address, phone } = req.body;
@@ -49,7 +46,6 @@ exports.createCustomer = async (req, res) => {
     }
 };
 
-// PUT /api/customers/:id - Actualizar un cliente
 exports.updateCustomer = async (req, res) => {
     try {
         const { id } = req.params;
@@ -77,11 +73,9 @@ exports.updateCustomer = async (req, res) => {
     }
 };
 
-// DELETE /api/customers/:id - Eliminar un cliente
 exports.deleteCustomer = async (req, res) => {
     try {
         const { id } = req.params;
-
         const [rows] = await db.query('SELECT * FROM Customers WHERE id = ?', [id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Cliente no encontrado' });
 
