@@ -1,89 +1,74 @@
 # MegaStore API
 
-A simple REST API + frontend for managing a store's products, categories, suppliers and customers.
+This is my project for the M4 exam. It's a REST API for managing a store with products, categories, suppliers and customers.
 
-Built with **Node.js**, **Express** and **MySQL**.
+## Tech I used
 
-## What's inside
+- Node.js + Express
+- MySQL (mysql2)
+- HTML, CSS and vanilla JavaScript for the frontend
 
-- Full CRUD for **Products**, **Categories**, **Suppliers** and **Customers**
-- A dark-themed dashboard (single HTML file, no frameworks) to browse and manage all the data
-- SQL scripts ready to set up and populate the database from an Excel dataset
+## How to run it
 
-## Database setup
-
-1. Make sure MySQL is running
-2. Create the database:
+1. Create the database in MySQL:
    ```sql
    CREATE DATABASE db_megastore_exam;
    ```
-3. Import the schema + data:
+
+2. Import the data:
    ```bash
-   mysql -u root -p db_megastore_exam < ../dump-db_megastore_exam-202603021946.sql
+   mysql -u root -p db_megastore_exam < dump-db_megastore_exam-202603021946.sql
    ```
-   Or if you prefer just the inserts on a fresh schema:
+
+3. Update the password in `db-mysql.js` if needed
+
+4. Install and run:
    ```bash
-   mysql -u root -p < ../insert-data.sql
+   cd megastore-api
+   npm install
+   node index.js
    ```
-4. Update the credentials in `db-mysql.js` if yours are different
 
-## Run it
+5. Open http://localhost:3000
 
-```bash
-cd megastore-api
-npm install
-node index.js
-```
+## API Routes
 
-Then open [http://localhost:3000](http://localhost:3000) in your browser.
+| Method | URL | Description |
+|--------|-----|-------------|
+| GET | /api/products | Get all products |
+| GET | /api/products/:id | Get one product |
+| POST | /api/products | Create product |
+| PUT | /api/products/:id | Update product |
+| DELETE | /api/products/:id | Delete product |
+| GET | /api/categories | Get all categories |
+| GET | /api/categories/:id | Get one category |
+| POST | /api/categories | Create category |
+| PUT | /api/categories/:id | Update category |
+| DELETE | /api/categories/:id | Delete category |
+| GET | /api/suppliers | Get all suppliers |
+| GET | /api/suppliers/:id | Get one supplier |
+| POST | /api/suppliers | Create supplier |
+| PUT | /api/suppliers/:id | Update supplier |
+| DELETE | /api/suppliers/:id | Delete supplier |
+| GET | /api/customers | Get all customers |
+| GET | /api/customers/:id | Get one customer |
+| POST | /api/customers | Create customer |
+| PUT | /api/customers/:id | Update customer |
+| DELETE | /api/customers/:id | Delete customer |
 
-## API Endpoints
-
-| Method | Route | What it does |
-|--------|-------|-------------|
-| GET | `/api/products` | List all products |
-| GET | `/api/products/:id` | Get one product |
-| POST | `/api/products` | Create a product |
-| PUT | `/api/products/:id` | Update a product |
-| DELETE | `/api/products/:id` | Delete a product |
-| GET | `/api/categories` | List all categories |
-| GET | `/api/categories/:id` | Get one category |
-| POST | `/api/categories` | Create a category |
-| PUT | `/api/categories/:id` | Update a category |
-| DELETE | `/api/categories/:id` | Delete a category |
-| GET | `/api/suppliers` | List all suppliers |
-| GET | `/api/suppliers/:id` | Get one supplier |
-| POST | `/api/suppliers` | Create a supplier |
-| PUT | `/api/suppliers/:id` | Update a supplier |
-| DELETE | `/api/suppliers/:id` | Delete a supplier |
-| GET | `/api/customers` | List all customers |
-| GET | `/api/customers/:id` | Get one customer |
-| POST | `/api/customers` | Create a customer |
-| PUT | `/api/customers/:id` | Update a customer |
-| DELETE | `/api/customers/:id` | Delete a customer |
-
-## Project structure
+## Files
 
 ```
 megastore-api/
-├── public/
-│   └── index.html          # Frontend dashboard
-├── index.js                # Entry point + Express setup
-├── db-mysql.js             # MySQL connection pool
-├── productController.js    # Product CRUD logic
-├── productRoutes.js        # Product routes
-├── categoryController.js   # Category CRUD logic
-├── categoryRoutes.js       # Category routes
-├── supplierController.js   # Supplier CRUD logic
-├── supplierRoutes.js       # Supplier routes
-├── customerController.js   # Customer CRUD logic
-├── customerRoutes.js       # Customer routes
-└── package.json
+  index.js              - main server file
+  db-mysql.js           - database connection
+  productController.js  - product CRUD
+  productRoutes.js      - product routes
+  categoryController.js - category CRUD
+  categoryRoutes.js     - category routes
+  supplierController.js - supplier CRUD
+  supplierRoutes.js     - supplier routes
+  customerController.js - customer CRUD
+  customerRoutes.js     - customer routes
+  public/index.html     - frontend
 ```
-
-## Tech stack
-
-- Node.js
-- Express 5
-- MySQL 8 (via mysql2)
-- Vanilla HTML/CSS/JS (frontend)

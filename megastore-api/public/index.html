@@ -2,158 +2,262 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MegaStore</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #f5f5f5; color: #333; padding: 20px; }
-        h1 { margin-bottom: 15px; }
-        nav { margin-bottom: 20px; }
-        nav button { padding: 8px 16px; margin-right: 5px; cursor: pointer; border: 1px solid #ccc; background: #fff; }
-        nav button.active { background: #333; color: #fff; border-color: #333; }
-        table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 10px; }
-        th, td { padding: 10px 12px; border: 1px solid #ddd; text-align: left; font-size: 14px; }
-        th { background: #333; color: #fff; }
-        .actions button { margin-right: 4px; padding: 4px 10px; cursor: pointer; font-size: 13px; }
-        .btn-edit { background: #2196F3; color: #fff; border: none; }
-        .btn-del { background: #f44336; color: #fff; border: none; }
-        .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 5px; }
-        .toolbar h2 { font-size: 18px; }
-        .btn-add { padding: 6px 14px; background: #4CAF50; color: #fff; border: none; cursor: pointer; font-size: 13px; }
-        .overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.5); justify-content:center; align-items:center; z-index:10; }
-        .overlay.show { display:flex; }
-        .modal { background:#fff; padding:24px; width:380px; max-width:90vw; border-radius:6px; }
-        .modal h3 { margin-bottom:14px; }
-        .modal label { display:block; margin-bottom:3px; font-size:13px; color:#555; }
-        .modal input, .modal select { width:100%; padding:7px; margin-bottom:10px; border:1px solid #ccc; font-size:14px; }
-        .modal-btns { display:flex; gap:8px; margin-top:8px; }
-        .modal-btns button { flex:1; padding:8px; border:none; cursor:pointer; font-size:14px; }
-        .modal-btns .save { background:#4CAF50; color:#fff; }
-        .modal-btns .cancel { background:#ccc; }
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }
+        h1 { color: #333; }
+        nav { margin-bottom: 15px; }
+        nav button { padding: 8px 14px; margin-right: 5px; cursor: pointer; border: 1px solid #999; background: white; }
+        nav button.active { background: #333; color: white; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; }
+        th, td { padding: 8px; border: 1px solid #ccc; text-align: left; }
+        th { background: #444; color: white; }
+        .btn-add { padding: 6px 12px; background: green; color: white; border: none; cursor: pointer; margin-bottom: 10px; }
+        .btn-edit { padding: 4px 8px; background: #2196F3; color: white; border: none; cursor: pointer; }
+        .btn-del { padding: 4px 8px; background: red; color: white; border: none; cursor: pointer; }
+        .overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10; }
+        .overlay.show { display:flex; justify-content:center; align-items:center; }
+        .modal { background: white; padding: 20px; width: 350px; border-radius: 5px; }
+        .modal h3 { margin-top: 0; }
+        .modal label { display: block; margin-top: 8px; font-size: 13px; }
+        .modal input, .modal select { width: 100%; padding: 6px; margin-top: 3px; border: 1px solid #ccc; }
+        .modal-btns { margin-top: 15px; display: flex; gap: 10px; }
+        .modal-btns button { flex: 1; padding: 8px; border: none; cursor: pointer; }
+        .btn-save { background: green; color: white; }
+        .btn-cancel { background: #ccc; }
     </style>
 </head>
 <body>
 
-<h1>MegaStore</h1>
-<nav>
-    <button class="active" onclick="show('products',this)">Products</button>
-    <button onclick="show('categories',this)">Categories</button>
-    <button onclick="show('suppliers',this)">Suppliers</button>
-    <button onclick="show('customers',this)">Customers</button>
-</nav>
-<div id="content">Loading...</div>
+<h1>MegaStore Dashboard</h1>
 
+<nav>
+    <button class="active" onclick="cambiarSeccion('products', this)">Productos</button>
+    <button onclick="cambiarSeccion('categories', this)">Categorias</button>
+    <button onclick="cambiarSeccion('suppliers', this)">Proveedores</button>
+    <button onclick="cambiarSeccion('customers', this)">Clientes</button>
+</nav>
+
+<button class="btn-add" onclick="abrirModal()">+ Agregar</button>
+<div id="tabla">Cargando...</div>
+
+<!-- modal para crear y editar -->
 <div class="overlay" id="overlay">
     <div class="modal">
-        <h3 id="modalTitle"></h3>
+        <h3 id="modalTitulo">Nuevo</h3>
         <form id="modalForm"></form>
     </div>
 </div>
 
 <script>
-let section = 'products';
-let cats = [], sups = [];
+// seccion actual y listas auxiliares para los selects
+let seccion = 'products';
+let categorias = [];
+let proveedores = [];
 
-async function api(path, opts) {
-    const r = await fetch(path, opts);
-    if (!r.ok) throw new Error((await r.json().catch(()=>({}))).error || r.statusText);
-    return r.json();
-}
-
-function show(s, btn) {
-    section = s;
+// cambiar de seccion
+function cambiarSeccion(nueva, btn) {
+    seccion = nueva;
     document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-    if (btn) btn.classList.add('active');
-    load();
+    btn.classList.add('active');
+    cargarDatos();
 }
 
-async function load() {
-    const el = document.getElementById('content');
+// funcion para hacer peticiones a la api
+async function fetchApi(url, opciones) {
+    const resp = await fetch(url, opciones);
+    return resp.json();
+}
+
+// cargar los datos y armar la tabla
+async function cargarDatos() {
+    const div = document.getElementById('tabla');
+
     try {
-        const data = await api('/api/' + section);
-        if (section === 'products') {
-            cats = await api('/api/categories');
-            sups = await api('/api/suppliers');
-            el.innerHTML = toolbar('Products') + `<table>
-                <tr><th>ID</th><th>SKU</th><th>Name</th><th>Price</th><th>Category</th><th>Supplier</th><th>Actions</th></tr>
-                ${data.map(p => `<tr><td>${p.id}</td><td>${p.sku}</td><td>${p.name}</td><td>$${Number(p.price).toLocaleString()}</td><td>${p.category_name}</td><td>${p.supplier_name}</td><td class="actions">
-                    <button class="btn-edit" onclick='editProduct(${JSON.stringify(p)})'>Edit</button>
-                    <button class="btn-del" onclick="remove(${p.id})">Delete</button></td></tr>`).join('')}</table>`;
-        } else if (section === 'categories') {
-            cats = data;
-            el.innerHTML = toolbar('Categories') + `<table><tr><th>ID</th><th>Name</th><th>Actions</th></tr>
-                ${data.map(c => `<tr><td>${c.id}</td><td>${c.name}</td><td class="actions">
-                    <button class="btn-edit" onclick='editSimple(${JSON.stringify(c)},["name"])'>Edit</button>
-                    <button class="btn-del" onclick="remove(${c.id})">Delete</button></td></tr>`).join('')}</table>`;
-        } else if (section === 'suppliers') {
-            sups = data;
-            el.innerHTML = toolbar('Suppliers') + `<table><tr><th>ID</th><th>Name</th><th>Email</th><th>Actions</th></tr>
-                ${data.map(s => `<tr><td>${s.id}</td><td>${s.name}</td><td>${s.email}</td><td class="actions">
-                    <button class="btn-edit" onclick='editSimple(${JSON.stringify(s)},["name","email"])'>Edit</button>
-                    <button class="btn-del" onclick="remove(${s.id})">Delete</button></td></tr>`).join('')}</table>`;
+        const datos = await fetchApi('/api/' + seccion);
+
+        if (seccion === 'products') {
+            // tambien cargo categorias y proveedores para los selects
+            categorias = await fetchApi('/api/categories');
+            proveedores = await fetchApi('/api/suppliers');
+
+            let html = '<table><tr><th>ID</th><th>SKU</th><th>Nombre</th><th>Precio</th><th>Categoria</th><th>Proveedor</th><th>Acciones</th></tr>';
+            datos.forEach(p => {
+                html += '<tr>';
+                html += '<td>' + p.id + '</td>';
+                html += '<td>' + p.sku + '</td>';
+                html += '<td>' + p.name + '</td>';
+                html += '<td>$' + Number(p.price).toLocaleString() + '</td>';
+                html += '<td>' + p.category_name + '</td>';
+                html += '<td>' + p.supplier_name + '</td>';
+                html += '<td>';
+                html += '<button class="btn-edit" onclick=\'editarProducto(' + JSON.stringify(p) + ')\'>Editar</button> ';
+                html += '<button class="btn-del" onclick="eliminar(' + p.id + ')">Borrar</button>';
+                html += '</td></tr>';
+            });
+            html += '</table>';
+            div.innerHTML = html;
+
+        } else if (seccion === 'categories') {
+            let html = '<table><tr><th>ID</th><th>Nombre</th><th>Acciones</th></tr>';
+            datos.forEach(c => {
+                html += '<tr><td>' + c.id + '</td><td>' + c.name + '</td><td>';
+                html += '<button class="btn-edit" onclick=\'editarSimple(' + JSON.stringify(c) + ', ["name"])\'>Editar</button> ';
+                html += '<button class="btn-del" onclick="eliminar(' + c.id + ')">Borrar</button>';
+                html += '</td></tr>';
+            });
+            html += '</table>';
+            div.innerHTML = html;
+
+        } else if (seccion === 'suppliers') {
+            let html = '<table><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Acciones</th></tr>';
+            datos.forEach(s => {
+                html += '<tr><td>' + s.id + '</td><td>' + s.name + '</td><td>' + s.email + '</td><td>';
+                html += '<button class="btn-edit" onclick=\'editarSimple(' + JSON.stringify(s) + ', ["name","email"])\'>Editar</button> ';
+                html += '<button class="btn-del" onclick="eliminar(' + s.id + ')">Borrar</button>';
+                html += '</td></tr>';
+            });
+            html += '</table>';
+            div.innerHTML = html;
+
         } else {
-            el.innerHTML = toolbar('Customers') + `<table><tr><th>ID</th><th>Name</th><th>Email</th><th>Address</th><th>Phone</th><th>Actions</th></tr>
-                ${data.map(c => `<tr><td>${c.id}</td><td>${c.full_name}</td><td>${c.email}</td><td>${c.address||'-'}</td><td>${c.phone||'-'}</td><td class="actions">
-                    <button class="btn-edit" onclick='editSimple(${JSON.stringify(c)},["full_name","email","address","phone"])'>Edit</button>
-                    <button class="btn-del" onclick="remove(${c.id})">Delete</button></td></tr>`).join('')}</table>`;
+            let html = '<table><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Direccion</th><th>Telefono</th><th>Acciones</th></tr>';
+            datos.forEach(c => {
+                html += '<tr><td>' + c.id + '</td><td>' + c.full_name + '</td><td>' + c.email + '</td>';
+                html += '<td>' + (c.address || '-') + '</td><td>' + (c.phone || '-') + '</td><td>';
+                html += '<button class="btn-edit" onclick=\'editarSimple(' + JSON.stringify(c) + ', ["full_name","email","address","phone"])\'>Editar</button> ';
+                html += '<button class="btn-del" onclick="eliminar(' + c.id + ')">Borrar</button>';
+                html += '</td></tr>';
+            });
+            html += '</table>';
+            div.innerHTML = html;
         }
-    } catch(e) { el.innerHTML = 'Error: ' + e.message; }
+    } catch (err) {
+        div.innerHTML = 'Error cargando datos: ' + err.message;
+    }
 }
 
-function toolbar(title) {
-    return `<div class="toolbar"><h2>${title}</h2><button class="btn-add" onclick="add()">+ Add</button></div>`;
+// abrir el modal para agregar
+function abrirModal() {
+    if (seccion === 'products') {
+        editarProducto(null);
+    } else {
+        let campos;
+        if (seccion === 'categories') campos = ['name'];
+        else if (seccion === 'suppliers') campos = ['name', 'email'];
+        else campos = ['full_name', 'email', 'address', 'phone'];
+        editarSimple(null, campos);
+    }
 }
 
-function add() {
-    if (section === 'products') return editProduct();
-    const fields = section === 'categories' ? ['name'] : section === 'suppliers' ? ['name','email'] : ['full_name','email','address','phone'];
-    editSimple(null, fields);
-}
+// modal para productos (tiene selects de categoria y proveedor)
+function editarProducto(producto) {
+    const esEditar = producto !== null;
+    document.getElementById('modalTitulo').textContent = esEditar ? 'Editar Producto' : 'Nuevo Producto';
 
-function editProduct(p) {
-    const edit = !!p;
-    document.getElementById('modalTitle').textContent = edit ? 'Edit Product' : 'New Product';
-    document.getElementById('modalForm').innerHTML = `
-        <label>SKU</label><input name="sku" value="${p?.sku||''}" required>
-        <label>Name</label><input name="name" value="${p?.name||''}" required>
-        <label>Price</label><input name="price" type="number" value="${p?.price||''}" required>
-        <label>Category</label><select name="category_id">${cats.map(c=>`<option value="${c.id}" ${p?.category_id==c.id?'selected':''}>${c.name}</option>`).join('')}</select>
-        <label>Supplier</label><select name="supplier_id">${sups.map(s=>`<option value="${s.id}" ${p?.supplier_id==s.id?'selected':''}>${s.name}</option>`).join('')}</select>
-        <div class="modal-btns"><button type="button" class="cancel" onclick="close_()">Cancel</button><button type="submit" class="save">${edit?'Update':'Create'}</button></div>`;
-    document.getElementById('modalForm').onsubmit = async(e)=>{
+    let formHtml = '';
+    formHtml += '<label>SKU</label><input name="sku" value="' + (producto ? producto.sku : '') + '">';
+    formHtml += '<label>Nombre</label><input name="name" value="' + (producto ? producto.name : '') + '">';
+    formHtml += '<label>Precio</label><input name="price" type="number" value="' + (producto ? producto.price : '') + '">';
+
+    formHtml += '<label>Categoria</label><select name="category_id">';
+    categorias.forEach(c => {
+        formHtml += '<option value="' + c.id + '"' + (producto && producto.category_id == c.id ? ' selected' : '') + '>' + c.name + '</option>';
+    });
+    formHtml += '</select>';
+
+    formHtml += '<label>Proveedor</label><select name="supplier_id">';
+    proveedores.forEach(s => {
+        formHtml += '<option value="' + s.id + '"' + (producto && producto.supplier_id == s.id ? ' selected' : '') + '>' + s.name + '</option>';
+    });
+    formHtml += '</select>';
+
+    formHtml += '<div class="modal-btns">';
+    formHtml += '<button type="button" class="btn-cancel" onclick="cerrar()">Cancelar</button>';
+    formHtml += '<button type="submit" class="btn-save">' + (esEditar ? 'Guardar' : 'Crear') + '</button>';
+    formHtml += '</div>';
+
+    document.getElementById('modalForm').innerHTML = formHtml;
+
+    document.getElementById('modalForm').onsubmit = async (e) => {
         e.preventDefault();
-        const fd = Object.fromEntries(new FormData(e.target));
-        fd.price=parseFloat(fd.price); fd.category_id=parseInt(fd.category_id); fd.supplier_id=parseInt(fd.supplier_id);
-        await api(edit?`/api/products/${p.id}`:'/api/products',{method:edit?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(fd)});
-        close_(); load();
+        const datos = Object.fromEntries(new FormData(e.target));
+        datos.price = parseFloat(datos.price);
+        datos.category_id = parseInt(datos.category_id);
+        datos.supplier_id = parseInt(datos.supplier_id);
+
+        const url = esEditar ? '/api/products/' + producto.id : '/api/products';
+        const method = esEditar ? 'PUT' : 'POST';
+
+        await fetchApi(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+        cerrar();
+        cargarDatos();
     };
+
     document.getElementById('overlay').classList.add('show');
 }
 
-function editSimple(existing, fields) {
-    const edit = !!existing;
-    document.getElementById('modalTitle').textContent = (edit?'Edit':'New') + ' ' + section.slice(0,-1);
-    document.getElementById('modalForm').innerHTML = `
-        ${fields.map(f=>`<label>${f}</label><input name="${f}" value="${existing?.[f]||''}">`).join('')}
-        <div class="modal-btns"><button type="button" class="cancel" onclick="close_()">Cancel</button><button type="submit" class="save">${edit?'Update':'Create'}</button></div>`;
-    document.getElementById('modalForm').onsubmit = async(e)=>{
+// modal para categorias, proveedores o clientes
+function editarSimple(registro, campos) {
+    const esEditar = registro !== null;
+    let nombre = 'Registro';
+    if (seccion === 'categories') nombre = 'Categoria';
+    else if (seccion === 'suppliers') nombre = 'Proveedor';
+    else if (seccion === 'customers') nombre = 'Cliente';
+
+    document.getElementById('modalTitulo').textContent = (esEditar ? 'Editar ' : 'Nuevo ') + nombre;
+
+    let formHtml = '';
+    campos.forEach(campo => {
+        formHtml += '<label>' + campo + '</label>';
+        formHtml += '<input name="' + campo + '" value="' + (registro ? (registro[campo] || '') : '') + '">';
+    });
+
+    formHtml += '<div class="modal-btns">';
+    formHtml += '<button type="button" class="btn-cancel" onclick="cerrar()">Cancelar</button>';
+    formHtml += '<button type="submit" class="btn-save">' + (esEditar ? 'Guardar' : 'Crear') + '</button>';
+    formHtml += '</div>';
+
+    document.getElementById('modalForm').innerHTML = formHtml;
+
+    document.getElementById('modalForm').onsubmit = async (e) => {
         e.preventDefault();
-        const fd = Object.fromEntries(new FormData(e.target));
-        await api(edit?`/api/${section}/${existing.id}`:`/api/${section}`,{method:edit?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(fd)});
-        close_(); load();
+        const datos = Object.fromEntries(new FormData(e.target));
+
+        const url = esEditar ? '/api/' + seccion + '/' + registro.id : '/api/' + seccion;
+        const method = esEditar ? 'PUT' : 'POST';
+
+        await fetchApi(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+        cerrar();
+        cargarDatos();
     };
+
     document.getElementById('overlay').classList.add('show');
 }
 
-async function remove(id) {
-    if (!confirm('Delete this record?')) return;
-    await api(`/api/${section}/${id}`, {method:'DELETE'});
-    load();
+// eliminar un registro
+async function eliminar(id) {
+    if (!confirm('¿Seguro que quieres eliminarlo?')) return;
+    await fetchApi('/api/' + seccion + '/' + id, { method: 'DELETE' });
+    cargarDatos();
 }
 
-function close_() { document.getElementById('overlay').classList.remove('show'); }
+// cerrar el modal
+function cerrar() {
+    document.getElementById('overlay').classList.remove('show');
+}
 
-load();
+// al cargar la pagina muestro los productos
+cargarDatos();
 </script>
+
 </body>
 </html>

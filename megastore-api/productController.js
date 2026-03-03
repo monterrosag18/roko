@@ -1,107 +1,88 @@
 const db = require('./db-mysql');
 
-exports.getAllProducts = async (req, res) => {
+// traer todos los productos con su categoria y proveedor
+const getAll = async (req, res) => {
     try {
-        const [rows] = await db.query(`
-            SELECT p.id, p.sku, p.name, p.price, 
-                   p.category_id, c.name AS category_name,
-                   p.supplier_id, s.name AS supplier_name
-            FROM Products p
-            JOIN Categories c ON p.category_id = c.id
-            JOIN Suppliers s ON p.supplier_id = s.id
-            ORDER BY p.id
-        `);
-        res.json(rows);
-    } catch (error) {
-        console.error(error);
+        const [productos] = await db.query(
+            `SELECT p.*, c.name AS category_name, s.name AS supplier_name
+             FROM Products p
+             JOIN Categories c ON p.category_id = c.id
+             JOIN Suppliers s ON p.supplier_id = s.id
+             ORDER BY p.id`
+        );
+        res.json(productos);
+    } catch (err) {
+        console.log(err);
         res.status(500).json({ error: 'Error al obtener productos' });
     }
 };
 
-exports.getProductById = async (req, res) => {
+// buscar un producto por su id
+const getById = async (req, res) => {
     try {
-        const { id } = req.params;
-        const [rows] = await db.query(`
-            SELECT p.id, p.sku, p.name, p.price, 
-                   p.category_id, c.name AS category_name,
-                   p.supplier_id, s.name AS supplier_name
-            FROM Products p
-            JOIN Categories c ON p.category_id = c.id
-            JOIN Suppliers s ON p.supplier_id = s.id
-            WHERE p.id = ?
-        `, [id]);
-
-        if (rows.length === 0) return res.status(404).json({ error: 'Producto no encontrado' });
-        res.json(rows[0]);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error al obtener el producto' });
+        const [productos] = await db.query(
+            `SELECT p.*, c.name AS category_name, s.name AS supplier_name
+             FROM Products p
+             JOIN Categories c ON p.category_id = c.id
+             JOIN Suppliers s ON p.supplier_id = s.id
+             WHERE p.id = ?`,
+            [req.params.id]
+        );
+        if (productos.length === 0) {
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+        res.json(productos[0]);
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ error: 'Error al buscar el producto' });
     }
 };
 
-exports.createProduct = async (req, res) => {
+// crear un producto nuevo
+const create = async (req, res) => {
     try {
         const { sku, name, price, category_id, supplier_id } = req.body;
-
-        if (!sku || !name || !price || !category_id || !supplier_id) {
-            return res.status(400).json({ error: 'Todos los campos son obligatorios: sku, name, price, category_id, supplier_id' });
-        }
-
         const [result] = await db.query(
             'INSERT INTO Products (sku, name, price, category_id, supplier_id) VALUES (?, ?, ?, ?, ?)',
             [sku, name, price, category_id, supplier_id]
         );
-
         res.status(201).json({ id: result.insertId, sku, name, price, category_id, supplier_id });
-    } catch (error) {
-        console.error(error);
-        if (error.code === 'ER_DUP_ENTRY') {
-            return res.status(409).json({ error: 'Ya existe un producto con ese SKU' });
-        }
+    } catch (err) {
+        console.log(err);
         res.status(500).json({ error: 'Error al crear el producto' });
     }
 };
 
-exports.updateProduct = async (req, res) => {
+// actualizar un producto existente
+const update = async (req, res) => {
     try {
-        const { id } = req.params;
         const { sku, name, price, category_id, supplier_id } = req.body;
-
-        if (!sku || !name || !price || !category_id || !supplier_id) {
-            return res.status(400).json({ error: 'Todos los campos son obligatorios: sku, name, price, category_id, supplier_id' });
-        }
-
-        const [existing] = await db.query('SELECT * FROM Products WHERE id = ?', [id]);
-        if (existing.length === 0) return res.status(404).json({ error: 'Producto no encontrado' });
-
-        await db.query(
-            'UPDATE Products SET sku = ?, name = ?, price = ?, category_id = ?, supplier_id = ? WHERE id = ?',
-            [sku, name, price, category_id, supplier_id, id]
+        const [result] = await db.query(
+            'UPDATE Products SET sku=?, name=?, price=?, category_id=?, supplier_id=? WHERE id=?',
+            [sku, name, price, category_id, supplier_id, req.params.id]
         );
-
-        res.json({ id: parseInt(id), sku, name, price, category_id, supplier_id });
-    } catch (error) {
-        console.error(error);
-        if (error.code === 'ER_DUP_ENTRY') {
-            return res.status(409).json({ error: 'Ya existe un producto con ese SKU' });
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Producto no encontrado' });
         }
+        res.json({ message: 'Producto actualizado' });
+    } catch (err) {
+        console.log(err);
         res.status(500).json({ error: 'Error al actualizar el producto' });
     }
 };
 
-exports.deleteProduct = async (req, res) => {
+// eliminar un producto
+const remove = async (req, res) => {
     try {
-        const { id } = req.params;
-        const [rows] = await db.query('SELECT * FROM Products WHERE id = ?', [id]);
-
-        if (rows.length === 0) return res.status(404).json({ error: 'Producto no encontrado' });
-
-        console.log("LOG - Eliminando Producto:", rows[0]);
-        await db.query('DELETE FROM Products WHERE id = ?', [id]);
-
-        res.json({ message: 'Producto eliminado exitosamente', deleted: rows[0] });
-    } catch (error) {
-        console.error(error);
+        const [result] = await db.query('DELETE FROM Products WHERE id=?', [req.params.id]);
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+        res.json({ message: 'Producto eliminado' });
+    } catch (err) {
+        console.log(err);
         res.status(500).json({ error: 'Error al eliminar el producto' });
     }
 };
+
+module.exports = { getAll, getById, create, update, remove };
