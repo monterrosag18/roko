@@ -1,24 +1,3 @@
--- MySQL dump 10.13  Distrib 8.0.45, for Linux (x86_64)
---
--- Host: localhost    Database: db_megastore_exam
--- ------------------------------------------------------
--- Server version	8.0.45-0ubuntu0.24.04.1
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-
---
--- Table structure for table `Categories`
---
-
 DROP TABLE IF EXISTS `Categories`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -27,26 +6,18 @@ CREATE TABLE `Categories` (
   `name` varchar(100) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `Categories`
---
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 LOCK TABLES `Categories` WRITE;
-/*!40000 ALTER TABLE `Categories` DISABLE KEYS */;
+
 INSERT INTO `Categories` VALUES (1,'Accessories'),(2,'Electronics'),(3,'Home'),(4,'Kitchen'),(5,'Stationery');
-/*!40000 ALTER TABLE `Categories` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `Customers`
---
+
 
 DROP TABLE IF EXISTS `Customers`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+
 CREATE TABLE `Customers` (
   `id` int NOT NULL AUTO_INCREMENT,
   `full_name` varchar(255) NOT NULL,
@@ -55,15 +26,10 @@ CREATE TABLE `Customers` (
   `phone` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `Customers`
---
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 LOCK TABLES `Customers` WRITE;
-/*!40000 ALTER TABLE `Customers` DISABLE KEYS */;
+
 INSERT INTO `Customers` VALUES 
 (1,'Juan Perez','juan.perez@mail.com','Calle 123 #45-67 Bogota','3001234567'),
 (2,'Maria Rodriguez','maria.rod@gmail.com','Cra 80 #10-20 Medellin','3109876543'),
@@ -81,9 +47,6 @@ INSERT INTO `Customers` VALUES
 /*!40000 ALTER TABLE `Customers` ENABLE KEYS */;
 UNLOCK TABLES;
 
---
--- Table structure for table `Products`
---
 
 DROP TABLE IF EXISTS `Products`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -101,7 +64,7 @@ CREATE TABLE `Products` (
   KEY `supplier_id` (`supplier_id`),
   CONSTRAINT `Products_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `Categories` (`id`),
   CONSTRAINT `Products_ibfk_2` FOREIGN KEY (`supplier_id`) REFERENCES `Suppliers` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -148,7 +111,7 @@ CREATE TABLE `Suppliers` (
   `email` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --

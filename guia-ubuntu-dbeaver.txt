@@ -1,0 +1,289 @@
+======================================================
+  MEGASTORE - GUÍA PARA UBUNTU + MySQL + DBeaver
+======================================================
+
+
+------------------------------------------------------
+  1. INSTALAR NODE.JS EN UBUNTU
+------------------------------------------------------
+
+Abrir la terminal y ejecutar:
+
+  sudo apt update
+  sudo apt install -y curl
+  curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+  sudo apt install -y nodejs
+
+Verificar que se instaló:
+
+  node -v
+  npm -v
+
+
+------------------------------------------------------
+  2. INSTALAR MySQL EN UBUNTU
+------------------------------------------------------
+
+  sudo apt update
+  sudo apt install -y mysql-server
+
+Iniciar el servicio:
+
+  sudo systemctl start mysql
+  sudo systemctl enable mysql
+
+Entrar a MySQL como root:
+
+  sudo mysql
+
+Crear un password para root (reemplazar TU_PASSWORD por lo que quieras):
+
+  ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'TU_PASSWORD';
+  FLUSH PRIVILEGES;
+  EXIT;
+
+Ahora puedes entrar con:
+
+  mysql -u root -p
+
+    (te pedirá la contraseña que pusiste)
+
+Si prefieres dejar root SIN contraseña (más fácil para desarrollo):
+
+  sudo mysql
+  ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';
+  FLUSH PRIVILEGES;
+  EXIT;
+
+  Luego entras con:
+  mysql -u root
+
+
+------------------------------------------------------
+  3. INSTALAR DBeaver EN UBUNTU
+------------------------------------------------------
+
+Opción A - Desde snap (más fácil):
+
+  sudo snap install dbeaver-ce
+
+Opción B - Descargar el .deb:
+
+  1. Ir a https://dbeaver.io/download/
+  2. Descargar la versión Linux Debian
+  3. Instalar:
+     sudo dpkg -i dbeaver-ce_*.deb
+     sudo apt install -f
+
+Abrir DBeaver:
+
+  dbeaver-ce
+
+  (o buscarlo en las aplicaciones)
+
+
+------------------------------------------------------
+  4. CONECTAR DBeaver A MySQL
+------------------------------------------------------
+
+4.1 Abrir DBeaver y hacer clic en "Nueva Conexión" (icono del enchufe
+    con el +, arriba a la izquierda)
+
+4.2 Seleccionar "MySQL" y dar clic en "Siguiente"
+
+4.3 Llenar los datos:
+    - Server Host: localhost
+    - Port: 3306
+    - Database: (dejar vacío por ahora)
+    - Username: root
+    - Password: (la que configuraste, o vacía)
+
+4.4 Clic en "Test Connection"
+    - Si pide descargar el driver, darle "Descargar"
+    - Debe decir "Connected"
+
+4.5 Clic en "Finalizar"
+
+
+------------------------------------------------------
+  5. CREAR LA BASE DE DATOS DESDE DBeaver
+------------------------------------------------------
+
+5.1 En el panel izquierdo, click derecho sobre la conexión MySQL
+
+5.2 Seleccionar "Crear" > "Database"
+
+5.3 Nombre: db_megastore_exam
+    Charset: utf8mb4
+    Collation: utf8mb4_general_ci
+
+5.4 Clic en "OK"
+
+
+------------------------------------------------------
+  6. IMPORTAR EL DUMP DESDE DBeaver
+------------------------------------------------------
+
+Opción A - Desde la terminal (más seguro):
+
+  mysql -u root -p db_megastore_exam < dump-db_megastore_exam-202603021946.sql
+
+Opción B - Desde DBeaver:
+
+  6.1 En el panel izquierdo, expandir la conexión MySQL
+  6.2 Click derecho sobre "db_megastore_exam"
+  6.3 Seleccionar "SQL Editor" > "Abrir SQL Script"
+  6.4 Abrir el archivo dump-db_megastore_exam-202603021946.sql
+  6.5 Ejecutar todo con Ctrl + Shift + Enter (o el botón de play)
+
+Verificar en DBeaver:
+  - Expandir db_megastore_exam > Tables
+  - Deben aparecer: Categories, Customers, Products, Suppliers
+  - Click derecho en Products > "View Data" debe mostrar 21 filas
+
+
+------------------------------------------------------
+  7. CLONAR Y CONFIGURAR EL PROYECTO
+------------------------------------------------------
+
+7.1 Instalar git si no lo tienes:
+
+  sudo apt install -y git
+
+7.2 Clonar el repositorio:
+
+  git clone https://github.com/monterrosag18/roko.git
+  cd roko
+
+7.3 Instalar dependencias:
+
+  cd megastore-api
+  npm install
+
+7.4 Configurar la contraseña de MySQL:
+
+  Abrir megastore-api/db-mysql.js con cualquier editor:
+
+    nano db-mysql.js
+
+  Buscar esta parte y poner tu contraseña:
+
+    const pool = mysql.createPool({
+        host: 'localhost',
+        user: 'root',
+        password: 'TU_PASSWORD',    <-- poner la tuya aquí
+        database: 'db_megastore_exam'
+    });
+
+  Guardar: Ctrl + O, Enter, Ctrl + X
+
+  Si dejaste root sin contraseña, dejar: password: ''
+
+
+------------------------------------------------------
+  8. EJECUTAR EL SERVIDOR
+------------------------------------------------------
+
+Dentro de megastore-api:
+
+  node index.js
+
+Debe aparecer:
+
+  Servidor corriendo en http://localhost:3000
+  Conectado a MySQL
+
+Si dice "MySQL no disponible":
+  - Verificar que MySQL esté corriendo: sudo systemctl status mysql
+  - Verificar la contraseña en db-mysql.js
+  - Verificar que la base de datos existe: mysql -u root -p -e "SHOW DATABASES;"
+
+
+------------------------------------------------------
+  9. ABRIR EL FRONTEND
+------------------------------------------------------
+
+Abrir el navegador (Firefox o Chrome) y entrar a:
+
+  http://localhost:3000
+
+Debe mostrar el dashboard de MegaStore con:
+  - 21 productos en la tabla
+  - Botones de Productos, Categorías, Proveedores, Clientes
+  - Botón "+ Agregar" para crear nuevos
+  - Botones "Editar" y "Borrar" en cada fila
+
+Si no carga los datos:
+  - Ctrl + Shift + R para recargar sin caché
+  - Abrir la consola del navegador (F12 > Console) para ver errores
+  - Verificar que el servidor sigue corriendo en la terminal
+
+
+------------------------------------------------------
+  10. VER LA BASE DE DATOS EN DBeaver
+------------------------------------------------------
+
+Mientras el proyecto corre, puedes ver los datos en DBeaver:
+
+  - Click derecho en una tabla > "View Data" para ver los registros
+  - Si agregas/editas/borras desde el frontend, darle F5 en DBeaver
+    para refrescar y ver los cambios
+
+Tablas disponibles:
+  - Categories (5 registros): id, name
+  - Suppliers (10 registros): id, name, email
+  - Customers (13 registros): id, full_name, email, address, phone
+  - Products (21 registros): id, sku, name, price, category_id, supplier_id
+
+
+======================================================
+  RESUMEN RÁPIDO UBUNTU
+======================================================
+
+  1.  sudo apt install -y nodejs npm mysql-server git
+  2.  sudo systemctl start mysql
+  3.  sudo mysql
+      ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';
+      CREATE DATABASE db_megastore_exam;
+      EXIT;
+  4.  git clone https://github.com/monterrosag18/roko.git
+  5.  cd roko
+  6.  mysql -u root db_megastore_exam < dump-db_megastore_exam-202603021946.sql
+  7.  cd megastore-api
+  8.  npm install
+  9.  node index.js
+  10. Abrir http://localhost:3000
+
+
+======================================================
+  SOLUCIÓN DE PROBLEMAS COMUNES
+======================================================
+
+ERROR: "Access denied for user 'root'@'localhost'"
+  --> La contraseña en db-mysql.js no coincide con la de MySQL.
+  --> Cambiarla o resetear con: sudo mysql
+      ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';
+
+ERROR: "Unknown database 'db_megastore_exam'"
+  --> No creaste la base de datos. Ejecutar:
+      mysql -u root -p -e "CREATE DATABASE db_megastore_exam;"
+
+ERROR: "Unknown collation: 'utf8mb4_0900_ai_ci'"
+  --> Abrir el dump SQL y reemplazar:
+      utf8mb4_0900_ai_ci  -->  utf8mb4_general_ci
+
+ERROR: "Table 'Products' doesn't exist"
+  --> No importaste el dump. Ejecutar:
+      mysql -u root -p db_megastore_exam < dump-db_megastore_exam-202603021946.sql
+
+ERROR: "ECONNREFUSED" al iniciar el servidor
+  --> MySQL no está corriendo. Ejecutar:
+      sudo systemctl start mysql
+
+ERROR: Frontend dice "Error cargando datos"
+  --> Hacer Ctrl + Shift + R en el navegador
+  --> Verificar que el servidor imprimió "Conectado a MySQL"
+
+ERROR: "Module not found" al hacer node index.js
+  --> No instalaste dependencias. Ejecutar:
+      npm install

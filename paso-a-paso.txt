@@ -1,0 +1,274 @@
+======================================================
+  MEGASTORE - PASO A PASO PARA EJECUTAR EL PROYECTO
+======================================================
+
+Este documento explica todo lo que se hizo en el proyecto
+y cómo ejecutarlo en cualquier PC.
+
+
+------------------------------------------------------
+  REQUISITOS PREVIOS
+------------------------------------------------------
+
+1. Tener instalado Node.js (version 18 o superior)
+   - Descargar de: https://nodejs.org
+
+2. Tener instalado MySQL o MariaDB (XAMPP sirve)
+   - Si usas XAMPP: abrir XAMPP y darle Start a MySQL
+   - Si usas MySQL directamente: asegurarse que el servicio esté corriendo
+
+3. (Opcional) Tener MongoDB si quieres usar el script de migración
+   - Descargar de: https://www.mongodb.com/try/download/community
+
+
+------------------------------------------------------
+  ESTRUCTURA DEL PROYECTO
+------------------------------------------------------
+
+Prueba/
+  data.csv                                  --> datos originales en CSV
+  dump-db_megastore_exam-202603021946.sql   --> dump de la base de datos
+  insert-data.sql                           --> inserts manuales
+  cambios-realizados.txt                    --> resumen de cambios
+  paso-a-paso.txt                           --> este archivo
+  megastore-api/
+    index.js              --> servidor Express + todas las rutas
+    db-mysql.js           --> conexión a MySQL
+    migrate.js            --> script que lee el CSV y carga MySQL + MongoDB
+    productController.js  --> CRUD de productos
+    categoryController.js --> CRUD de categorías
+    supplierController.js --> CRUD de proveedores
+    customerController.js --> CRUD de clientes
+    package.json          --> dependencias del proyecto
+    public/
+      index.html          --> frontend (dashboard)
+
+
+------------------------------------------------------
+  PASO 1: CLONAR EL REPOSITORIO
+------------------------------------------------------
+
+Abrir una terminal (CMD o PowerShell) y ejecutar:
+
+  git clone https://github.com/monterrosag18/roko.git
+
+Entrar a la carpeta del proyecto:
+
+  cd roko
+
+
+------------------------------------------------------
+  PASO 2: CONFIGURAR LA BASE DE DATOS
+------------------------------------------------------
+
+2.1 Abrir MySQL (o XAMPP con MySQL encendido)
+
+2.2 Entrar a la consola de MySQL:
+
+  mysql -u root -p
+
+    (Si no tiene contraseña, solo dar Enter cuando pida password)
+
+2.3 Crear la base de datos:
+
+  CREATE DATABASE db_megastore_exam;
+  USE db_megastore_exam;
+
+2.4 Importar el dump (salir de MySQL primero con "exit"):
+
+  mysql -u root -p db_megastore_exam < dump-db_megastore_exam-202603021946.sql
+
+    Si no tiene contraseña:
+    mysql -u root db_megastore_exam < dump-db_megastore_exam-202603021946.sql
+
+    NOTA: Si da error de collation "utf8mb4_0900_ai_ci", es porque
+    tienes MariaDB en vez de MySQL 8. En ese caso abre el archivo
+    dump-db_megastore_exam-202603021946.sql con un editor de texto
+    y reemplaza todas las apariciones de:
+      utf8mb4_0900_ai_ci  -->  utf8mb4_general_ci
+
+2.5 Verificar que se importó bien (entrar a MySQL otra vez):
+
+  mysql -u root -p
+  USE db_megastore_exam;
+  SELECT COUNT(*) FROM Products;
+
+    Debe mostrar 21 productos.
+
+
+------------------------------------------------------
+  PASO 3: CONFIGURAR LA CONTRASEÑA DE MySQL
+------------------------------------------------------
+
+Abrir el archivo megastore-api/db-mysql.js y verificar
+que la contraseña sea la correcta para tu MySQL:
+
+  const pool = mysql.createPool({
+      host: 'localhost',
+      user: 'root',
+      password: '',          <-- cambiar si tu MySQL tiene contraseña
+      database: 'db_megastore_exam'
+  });
+
+Si usas el script de migración (migrate.js), también
+cambiar la contraseña ahí en la línea similar.
+
+
+------------------------------------------------------
+  PASO 4: INSTALAR DEPENDENCIAS
+------------------------------------------------------
+
+Entrar a la carpeta del API:
+
+  cd megastore-api
+
+Instalar los paquetes de Node.js:
+
+  npm install
+
+    Esto instala: express, mysql2, mongodb
+
+
+------------------------------------------------------
+  PASO 5: EJECUTAR EL SERVIDOR
+------------------------------------------------------
+
+Dentro de la carpeta megastore-api, ejecutar:
+
+  node index.js
+
+Debe aparecer en la terminal:
+
+  Servidor corriendo en http://localhost:3000
+  Conectado a MySQL
+
+
+------------------------------------------------------
+  PASO 6: ABRIR EN EL NAVEGADOR
+------------------------------------------------------
+
+Abrir el navegador y entrar a:
+
+  http://localhost:3000
+
+Se verá el dashboard de MegaStore con:
+  - Tabla de Productos (21 productos con categoría y proveedor)
+  - Botones para cambiar entre: Productos, Categorías, Proveedores, Clientes
+  - Botón "+ Agregar" para crear registros nuevos
+  - Botones "Editar" y "Borrar" en cada fila
+
+Si la tabla no carga y dice "Error cargando datos", hacer:
+  Ctrl + Shift + R (recarga sin caché)
+
+
+------------------------------------------------------
+  PASO 7 (OPCIONAL): MIGRACIÓN DESDE CSV
+------------------------------------------------------
+
+Si en vez de importar el dump SQL quieres cargar los datos
+desde el archivo CSV original:
+
+  npm run migrate
+
+Esto lee data.csv y carga:
+  - MySQL: Categories, Suppliers, Customers, Products
+  - MongoDB: colección "orders" (agrupa transacciones)
+
+Para esto necesitas tener MongoDB corriendo también.
+
+
+======================================================
+  CAMBIOS QUE SE HICIERON EN EL PROYECTO
+======================================================
+
+1. CONTRASEÑA DE MySQL
+   - Archivos: db-mysql.js, migrate.js
+   - Se cambió la contraseña según el MySQL local
+   - Si tu MySQL no tiene contraseña, dejar password: ''
+
+2. COMPATIBILIDAD CON MARIADB
+   - Archivo: dump-db_megastore_exam-202603021946.sql
+   - Se cambió utf8mb4_0900_ai_ci por utf8mb4_general_ci
+   - Se eliminó el BOM (carácter invisible al inicio del archivo)
+   - Razón: MariaDB 10.4 no soporta esa collation de MySQL 8
+
+3. ARCHIVO CSV
+   - Se creó data.csv a partir del Excel original
+   - 103 filas con datos de transacciones, clientes, productos, proveedores
+
+4. SCRIPT DE MIGRACIÓN (migrate.js)
+   - Lee el CSV sin librerías externas (solo usa fs de Node.js)
+   - Inserta categorías, proveedores, clientes y productos en MySQL
+   - Agrupa transacciones y las guarda como órdenes en MongoDB
+
+5. MANEJO DE ERRORES EN LOS CONTROLLERS
+   - Archivos: productController.js, categoryController.js,
+     supplierController.js, customerController.js
+   - Antes: console.log(err) imprimía todo el objeto con stack trace
+   - Ahora: console.log('Error:', err.message) solo imprime el mensaje
+
+6. FRONTEND (index.html)
+   - Se arregló fetchApi para que verifique si la respuesta es OK
+   - Antes: si el servidor daba error 500, el frontend se rompía
+   - Ahora: muestra el mensaje de error limpio
+
+7. CACHÉ DEL SERVIDOR
+   - Archivo: index.js
+   - Se desactivó el caché de archivos estáticos
+   - Razón: el navegador cargaba versiones viejas del HTML
+
+8. PACKAGE.JSON
+   - Se agregó dependencia mongodb para el script de migración
+   - Se agregó script "migrate" para ejecutar npm run migrate
+
+9. SIMPLIFICACIÓN GENERAL
+   - Se eliminaron archivos innecesarios (rutas separadas, node.js)
+   - Todas las rutas están directamente en index.js
+   - Código con estilo simple y comentarios en español
+
+
+======================================================
+  RUTAS DE LA API
+======================================================
+
+Productos:
+  GET    /api/products        --> lista todos
+  GET    /api/products/:id    --> busca uno por ID
+  POST   /api/products        --> crea uno nuevo
+  PUT    /api/products/:id    --> actualiza uno
+  DELETE /api/products/:id    --> elimina uno
+
+Categorías:
+  GET    /api/categories      --> lista todas
+  GET    /api/categories/:id  --> busca una
+  POST   /api/categories      --> crea una
+  PUT    /api/categories/:id  --> actualiza una
+  DELETE /api/categories/:id  --> elimina una
+
+Proveedores:
+  GET    /api/suppliers       --> lista todos
+  GET    /api/suppliers/:id   --> busca uno
+  POST   /api/suppliers       --> crea uno
+  PUT    /api/suppliers/:id   --> actualiza uno
+  DELETE /api/suppliers/:id   --> elimina uno
+
+Clientes:
+  GET    /api/customers       --> lista todos
+  GET    /api/customers/:id   --> busca uno
+  POST   /api/customers       --> crea uno
+  PUT    /api/customers/:id   --> actualiza uno
+  DELETE /api/customers/:id   --> elimina uno
+
+
+======================================================
+  RESUMEN RÁPIDO
+======================================================
+
+  1. git clone https://github.com/monterrosag18/roko.git
+  2. Crear base de datos: CREATE DATABASE db_megastore_exam;
+  3. Importar dump: mysql -u root db_megastore_exam < dump-db_megastore_exam-202603021946.sql
+  4. cd megastore-api
+  5. npm install
+  6. Verificar contraseña en db-mysql.js
+  7. node index.js
+  8. Abrir http://localhost:3000

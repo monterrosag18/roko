@@ -26,7 +26,7 @@ async function migrate() {
     const db = await mysql.createConnection({
         host: 'localhost',
         user: 'root',
-        password: 'Riwi2025**',
+        password: '',
         database: 'db_megastore_exam'
     });
     console.log('Conectado a MySQL');

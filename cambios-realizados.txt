@@ -1,0 +1,59 @@
+CAMBIOS REALIZADOS PARA QUE EL PROYECTO FUNCIONE
+=================================================
+
+1. CONTRASEÑA DE MySQL
+   - Archivo: megastore-api/db-mysql.js
+   - Archivo: megastore-api/migrate.js
+   - Cambio: password de 'Riwi2025**' a '' (vacía)
+   - Razón: el servidor MySQL local (MariaDB 10.4) no tenía contraseña configurada
+
+2. COLLATION DEL DUMP SQL
+   - Archivo: dump-db_megastore_exam-202603021946.sql
+   - Cambio: utf8mb4_0900_ai_ci → utf8mb4_general_ci (4 líneas)
+   - Razón: utf8mb4_0900_ai_ci es exclusiva de MySQL 8.0, MariaDB 10.4 no la soporta
+
+3. BOM DEL DUMP SQL
+   - Archivo: dump-db_megastore_exam-202603021946.sql
+   - Cambio: se eliminó el BOM (byte order mark) al inicio del archivo
+   - Razón: el BOM causaba error de sintaxis SQL al importar
+
+4. ARCHIVO CSV (data.csv)
+   - Se creó data.csv a partir del archivo Excel original
+   - 103 filas de datos con columnas: transaction_id, date, customer_name,
+     customer_email, customer_address, customer_phone, product_category,
+     product_sku, product_name, unit_price, quantity, total_line_value,
+     supplier_name, supplier_email
+
+5. SCRIPT DE MIGRACIÓN (migrate.js)
+   - Archivo nuevo: megastore-api/migrate.js
+   - Lee el CSV con fs (sin dependencias externas para parsear)
+   - Inserta en MySQL: Categories, Suppliers, Customers, Products
+   - Inserta en MongoDB: colección orders (agrupa por transaction_id)
+   - Se ejecuta con: npm run migrate
+
+6. MANEJO DE ERRORES EN CONTROLLERS
+   - Archivos: productController.js, categoryController.js,
+     supplierController.js, customerController.js
+   - Cambio: console.log(err) → console.log('Error:', err.message)
+   - Razón: evitar imprimir el objeto completo del error con stack trace
+
+7. FRONTEND (index.html)
+   - Cambio en fetchApi: ahora verifica resp.ok antes de usar los datos
+   - Si el servidor devuelve error, muestra el mensaje en vez de crashear
+   - Antes: datos.forEach fallaba cuando la respuesta era un objeto de error
+
+8. PACKAGE.JSON
+   - Se agregó dependencia: mongodb@^7.1.0
+   - Se agregó script: "migrate": "node migrate.js"
+
+ORDEN PARA EJECUTAR
+===================
+1. Tener MySQL/MariaDB corriendo
+2. Crear la base de datos:
+   CREATE DATABASE db_megastore_exam;
+3. Importar el dump:
+   mysql -u root db_megastore_exam < dump-db_megastore_exam-202603021946.sql
+4. cd megastore-api
+5. npm install
+6. node index.js
+7. Abrir http://localhost:3000

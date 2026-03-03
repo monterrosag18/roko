@@ -3,7 +3,7 @@ const mysql = require('mysql2/promise');
 const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
-    password: 'Riwi2025**',
+    password: '',
     database: 'db_megastore_exam'
 });
 

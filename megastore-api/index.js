@@ -7,7 +7,11 @@ const customers = require('./customerController');
 
 const app = express();
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+    etag: false,
+    lastModified: false,
+    setHeaders: (res) => res.set('Cache-Control', 'no-store')
+}));
 
 // productos
 app.get('/api/products', products.getAll);
