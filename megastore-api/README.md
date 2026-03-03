@@ -60,15 +60,11 @@ This is my project for the M4 exam. It's a REST API for managing a store with pr
 
 ```
 megastore-api/
-  index.js              - main server file
+  index.js              - server + routes
   db-mysql.js           - database connection
   productController.js  - product CRUD
-  productRoutes.js      - product routes
   categoryController.js - category CRUD
-  categoryRoutes.js     - category routes
   supplierController.js - supplier CRUD
-  supplierRoutes.js     - supplier routes
   customerController.js - customer CRUD
-  customerRoutes.js     - customer routes
   public/index.html     - frontend
 ```
