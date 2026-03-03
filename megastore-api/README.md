@@ -6,6 +6,7 @@ This is my project for the M4 exam. It's a REST API for managing a store with pr
 
 - Node.js + Express
 - MySQL (mysql2)
+- MongoDB (mongodb)
 - HTML, CSS and vanilla JavaScript for the frontend
 
 ## How to run it
@@ -15,21 +16,26 @@ This is my project for the M4 exam. It's a REST API for managing a store with pr
    CREATE DATABASE db_megastore_exam;
    ```
 
-2. Import the data:
+2. Import the SQL dump (tables + data):
    ```bash
    mysql -u root -p db_megastore_exam < dump-db_megastore_exam-202603021946.sql
    ```
 
-3. Update the password in `db-mysql.js` if needed
-
-4. Install and run:
+3. Or use the migration script that reads the CSV and loads MySQL + MongoDB:
    ```bash
    cd megastore-api
    npm install
+   npm run migrate
+   ```
+
+4. Update the password in `db-mysql.js` if needed
+
+5. Start the server:
+   ```bash
    node index.js
    ```
 
-5. Open http://localhost:3000
+6. Open http://localhost:3000
 
 ## API Routes
 
@@ -59,9 +65,11 @@ This is my project for the M4 exam. It's a REST API for managing a store with pr
 ## Files
 
 ```
+data.csv                  - datos del CSV original
 megastore-api/
   index.js              - server + routes
   db-mysql.js           - database connection
+  migrate.js            - reads CSV → inserts into MySQL + MongoDB
   productController.js  - product CRUD
   categoryController.js - category CRUD
   supplierController.js - supplier CRUD

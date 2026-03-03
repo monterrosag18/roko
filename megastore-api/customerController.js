@@ -6,7 +6,7 @@ const getAll = async (req, res) => {
         const [clientes] = await db.query('SELECT * FROM Customers ORDER BY id');
         res.json(clientes);
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al obtener clientes' });
     }
 };
@@ -20,7 +20,7 @@ const getById = async (req, res) => {
         }
         res.json(clientes[0]);
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al buscar el cliente' });
     }
 };
@@ -35,7 +35,7 @@ const create = async (req, res) => {
         );
         res.status(201).json({ id: result.insertId, full_name, email, address, phone });
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al crear el cliente' });
     }
 };
@@ -53,7 +53,7 @@ const update = async (req, res) => {
         }
         res.json({ message: 'Cliente actualizado' });
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al actualizar el cliente' });
     }
 };
@@ -67,7 +67,7 @@ const remove = async (req, res) => {
         }
         res.json({ message: 'Cliente eliminado' });
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al eliminar el cliente' });
     }
 };

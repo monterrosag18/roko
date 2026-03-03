@@ -6,7 +6,7 @@ const getAll = async (req, res) => {
         const [proveedores] = await db.query('SELECT * FROM Suppliers ORDER BY id');
         res.json(proveedores);
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al obtener proveedores' });
     }
 };
@@ -20,7 +20,7 @@ const getById = async (req, res) => {
         }
         res.json(proveedores[0]);
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al buscar el proveedor' });
     }
 };
@@ -32,7 +32,7 @@ const create = async (req, res) => {
         const [result] = await db.query('INSERT INTO Suppliers (name, email) VALUES (?, ?)', [name, email]);
         res.status(201).json({ id: result.insertId, name, email });
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al crear el proveedor' });
     }
 };
@@ -47,7 +47,7 @@ const update = async (req, res) => {
         }
         res.json({ message: 'Proveedor actualizado' });
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al actualizar el proveedor' });
     }
 };
@@ -61,7 +61,7 @@ const remove = async (req, res) => {
         }
         res.json({ message: 'Proveedor eliminado' });
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al eliminar el proveedor' });
     }
 };

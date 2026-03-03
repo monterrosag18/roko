@@ -12,7 +12,7 @@ const getAll = async (req, res) => {
         );
         res.json(productos);
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al obtener productos' });
     }
 };
@@ -33,7 +33,7 @@ const getById = async (req, res) => {
         }
         res.json(productos[0]);
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al buscar el producto' });
     }
 };
@@ -48,7 +48,7 @@ const create = async (req, res) => {
         );
         res.status(201).json({ id: result.insertId, sku, name, price, category_id, supplier_id });
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al crear el producto' });
     }
 };
@@ -66,7 +66,7 @@ const update = async (req, res) => {
         }
         res.json({ message: 'Producto actualizado' });
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al actualizar el producto' });
     }
 };
@@ -80,7 +80,7 @@ const remove = async (req, res) => {
         }
         res.json({ message: 'Producto eliminado' });
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al eliminar el producto' });
     }
 };

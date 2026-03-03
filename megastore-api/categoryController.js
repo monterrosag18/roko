@@ -6,7 +6,7 @@ const getAll = async (req, res) => {
         const [categorias] = await db.query('SELECT * FROM Categories ORDER BY id');
         res.json(categorias);
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al obtener categorias' });
     }
 };
@@ -20,7 +20,7 @@ const getById = async (req, res) => {
         }
         res.json(categorias[0]);
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al buscar la categoria' });
     }
 };
@@ -32,7 +32,7 @@ const create = async (req, res) => {
         const [result] = await db.query('INSERT INTO Categories (name) VALUES (?)', [name]);
         res.status(201).json({ id: result.insertId, name });
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al crear la categoria' });
     }
 };
@@ -47,7 +47,7 @@ const update = async (req, res) => {
         }
         res.json({ message: 'Categoria actualizada' });
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al actualizar la categoria' });
     }
 };
@@ -61,7 +61,7 @@ const remove = async (req, res) => {
         }
         res.json({ message: 'Categoria eliminada' });
     } catch (err) {
-        console.log(err);
+        console.log('Error:', err.message);
         res.status(500).json({ error: 'Error al eliminar la categoria' });
     }
 };

@@ -66,7 +66,9 @@ function cambiarSeccion(nueva, btn) {
 // funcion para hacer peticiones a la api
 async function fetchApi(url, opciones) {
     const resp = await fetch(url, opciones);
-    return resp.json();
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Error del servidor');
+    return data;
 }
 
 // cargar los datos y armar la tabla
