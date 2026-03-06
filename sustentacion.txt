@@ -1,0 +1,349 @@
+======================================================================
+  SUSTENTACIÓN - PRUEBA DE DESEMPEÑO M4 - MEGASTORE
+======================================================================
+
+Este documento sirve como guía para sustentar el proyecto en 10 minutos.
+Incluye: qué se hizo, cómo funciona, consultas SQL para demostrar
+los datos, y explicación del diagrama.
+
+
+======================================================================
+  1. RESUMEN DEL PROYECTO (1 minuto)
+======================================================================
+
+Se construyó un sistema para la tienda MegaStore que incluye:
+
+  - Lectura de datos desde un archivo CSV (data.csv)
+  - Base de datos relacional MySQL con 4 tablas normalizadas
+  - API REST con Node.js + Express (CRUD completo para las 4 tablas)
+  - Frontend web (dashboard) para gestionar los datos visualmente
+
+Tecnologías:
+  - Backend:  Node.js v22, Express 5, mysql2
+  - Frontend: HTML, CSS, JavaScript vanilla
+  - BD:       MySQL (relacional)
+
+
+======================================================================
+  2. ESQUEMA DE LA BASE DE DATOS (2 minutos)
+======================================================================
+
+El diagrama (Der.drawio.html) define dos partes:
+
+--- MYSQL (4 tablas relacionales) ---
+
+  Customers                          Suppliers
+  +----------+-----------+----+      +--------+-----------+----+
+  | int      | id        | PK |      | int    | id        | PK |
+  | string   | full_name |    |      | string | name      |    |
+  | string   | email     |    |      | string | email     |    |
+  | string   | address   |    |      +--------+-----------+----+
+  | string   | phone     |    |
+  +----------+-----------+----+      Categories
+                                     +--------+-----------+----+
+  Products                           | int    | id        | PK |
+  +---------+-------------+----+     | string | name      |    |
+  | int     | id          | PK |     +--------+-----------+----+
+  | string  | sku         |    |
+  | string  | name        |    |
+  | decimal | price       |    |
+  | int     | category_id | FK | --> Categories.id
+  | int     | supplier_id | FK | --> Suppliers.id
+  +---------+-------------+----+
+
+  Relaciones:
+    - Suppliers ---(supplies)---> Products   (1 proveedor tiene N productos)
+    - Categories --(contains)---> Products   (1 categoría tiene N productos)
+
+
+======================================================================
+  3. PROCESO DE ETL / MIGRACIÓN (2 minutos)
+======================================================================
+
+¿De dónde vienen los datos?
+
+  1. Se recibió un archivo Excel (PM-prueba-desempeno-data_m4.xlsx)
+  2. Se convirtió a CSV (data.csv) con 103 filas de transacciones
+  3. Del CSV se extrajeron los datos únicos y se normalizaron:
+
+     CSV (103 filas planas con datos repetidos)
+         |
+         v
+     Extrae datos únicos:
+       - 5 categorías   --> INSERT en Categories
+       - 10 proveedores  --> INSERT en Suppliers
+       - 13 clientes     --> INSERT en Customers
+       - 21 productos    --> INSERT en Products (con FK a category y supplier)
+
+  4. Se generó el dump SQL (dump-db_megastore_exam-202603021946.sql)
+     que contiene las tablas y los datos listos para importar
+
+
+======================================================================
+  4. CONSULTAS SQL PARA LA SUSTENTACIÓN (3 minutos)
+======================================================================
+
+Copiar y pegar estas consultas en DBeaver o en la consola de MySQL
+para mostrar los datos durante la sustentación.
+
+--- Entrar a MySQL ---
+  mysql -u root -p
+  USE db_megastore_exam;
+
+--- 4.1 Ver todas las tablas ---
+  SHOW TABLES;
+  -- Resultado: Categories, Customers, Products, Suppliers
+
+--- 4.2 Contar registros de cada tabla ---
+  SELECT 'Categories' AS tabla, COUNT(*) AS total FROM Categories
+  UNION ALL
+  SELECT 'Suppliers', COUNT(*) FROM Suppliers
+  UNION ALL
+  SELECT 'Customers', COUNT(*) FROM Customers
+  UNION ALL
+  SELECT 'Products', COUNT(*) FROM Products;
+
+  -- Resultado esperado:
+  -- Categories: 5
+  -- Suppliers:  10
+  -- Customers:  13
+  -- Products:   21
+
+--- 4.3 Ver las 5 categorías ---
+  SELECT * FROM Categories ORDER BY id;
+
+  -- Resultado:
+  -- 1 Accessories
+  -- 2 Electronics
+  -- 3 Home
+  -- 4 Kitchen
+  -- 5 Stationery
+
+--- 4.4 Ver todos los proveedores ---
+  SELECT * FROM Suppliers ORDER BY id;
+
+--- 4.5 Ver todos los clientes ---
+  SELECT id, full_name, email, phone FROM Customers ORDER BY id;
+
+--- 4.6 Ver productos con nombre de categoría y proveedor (JOIN) ---
+  SELECT
+    p.id,
+    p.sku,
+    p.name AS producto,
+    FORMAT(p.price, 0) AS precio,
+    c.name AS categoria,
+    s.name AS proveedor
+  FROM Products p
+  JOIN Categories c ON p.category_id = c.id
+  JOIN Suppliers s ON p.supplier_id = s.id
+  ORDER BY p.id;
+
+--- 4.7 Contar cuántos productos tiene cada categoría ---
+  SELECT
+    c.name AS categoria,
+    COUNT(p.id) AS total_productos
+  FROM Categories c
+  LEFT JOIN Products p ON c.id = p.category_id
+  GROUP BY c.id, c.name
+  ORDER BY total_productos DESC;
+
+  -- Resultado esperado:
+  -- Accessories: 6
+  -- Electronics: 7
+  -- Home:        4
+  -- Kitchen:     2
+  -- Stationery:  2
+
+--- 4.8 Contar cuántos productos suministra cada proveedor ---
+  SELECT
+    s.name AS proveedor,
+    COUNT(p.id) AS productos
+  FROM Suppliers s
+  LEFT JOIN Products p ON s.id = p.supplier_id
+  GROUP BY s.id, s.name
+  ORDER BY productos DESC;
+
+--- 4.9 Producto más caro y más barato ---
+  (SELECT 'Más caro' AS tipo, name, FORMAT(price, 0) AS precio
+   FROM Products ORDER BY price DESC LIMIT 1)
+  UNION ALL
+  (SELECT 'Más barato', name, FORMAT(price, 0)
+   FROM Products ORDER BY price ASC LIMIT 1);
+
+  -- Resultado:
+  -- Más caro:   Laptop HP Pavilion 15      (3,500,000)
+  -- Más barato: Resma Papel Carta 500      (25,000)
+
+--- 4.10 Total del inventario (suma de todos los precios) ---
+  SELECT
+    FORMAT(SUM(price), 0) AS valor_total_inventario,
+    COUNT(*) AS total_productos
+  FROM Products;
+
+--- 4.11 Productos de electrónicos ordenados por precio ---
+  SELECT p.sku, p.name, FORMAT(p.price, 0) AS precio
+  FROM Products p
+  JOIN Categories c ON p.category_id = c.id
+  WHERE c.name = 'Electronics'
+  ORDER BY p.price DESC;
+
+--- 4.12 Buscar clientes de Bogotá ---
+  SELECT full_name, email, address
+  FROM Customers
+  WHERE address LIKE '%Bogota%';
+
+--- 4.13 Verificar integridad referencial (FK) ---
+  SELECT
+    p.name AS producto,
+    c.name AS categoria,
+    s.name AS proveedor
+  FROM Products p
+  JOIN Categories c ON p.category_id = c.id
+  JOIN Suppliers s ON p.supplier_id = s.id
+  WHERE p.id = 1;
+
+  -- Verifica que el producto "Laptop HP Pavilion 15"
+  -- pertenece a "Electronics" y lo provee "TechDistro SAS"
+
+--- 4.14 Estructura de la tabla Products (mostrar columnas y FK) ---
+  DESCRIBE Products;
+  SHOW CREATE TABLE Products;
+
+
+======================================================================
+  5. DEMOSTRACIÓN DEL FRONTEND (2 minutos)
+======================================================================
+
+Con el servidor corriendo (node index.js), abrir http://localhost:3000
+
+Mostrar:
+
+  5.1 PRODUCTOS
+      - La tabla muestra los 21 productos con JOINs
+        (categoría y proveedor se ven como texto, no como IDs)
+      - Hacer clic en "Editar" en un producto, cambiar el precio
+      - Hacer clic en "Borrar" en uno, confirmar y ver que desaparece
+      - Hacer clic en "+ Agregar", llenar el formulario, ver que aparece
+
+  5.2 CATEGORÍAS
+      - Clic en el botón "Categorias" del navbar
+      - Se ven las 5 categorías
+      - Crear una nueva: "Toys" y ver que aparece
+
+  5.3 PROVEEDORES
+      - Clic en "Proveedores"
+      - Se ven los 10 proveedores con su email
+      - Editar el email de uno y verificar
+
+  5.4 CLIENTES
+      - Clic en "Clientes"
+      - Se ven los 13 clientes con nombre, email, dirección, teléfono
+      - Agregar un cliente nuevo
+
+  NOTA: Cada acción llama a la API REST:
+    - Agregar  = POST   /api/[recurso]
+    - Editar   = PUT    /api/[recurso]/:id
+    - Eliminar = DELETE /api/[recurso]/:id
+    - Listar   = GET    /api/[recurso]
+
+
+======================================================================
+  6. ARQUITECTURA TÉCNICA (explicar si preguntan)
+======================================================================
+
+  Flujo de una petición:
+
+    Navegador (index.html)
+        |
+        | fetch('/api/products')
+        v
+    Express (index.js)
+        |
+        | app.get('/api/products', products.getAll)
+        v
+    Controller (productController.js)
+        |
+        | db.query('SELECT p.*, c.name ...')
+        v
+    MySQL Pool (db-mysql.js)
+        |
+        v
+    MariaDB / MySQL
+
+  Archivos del proyecto:
+
+    index.js              --> configura Express, registra las 20 rutas
+    db-mysql.js           --> crea el pool de conexiones a MySQL
+    productController.js  --> 5 funciones: getAll, getById, create, update, remove
+    categoryController.js --> 5 funciones CRUD para categorías
+    supplierController.js --> 5 funciones CRUD para proveedores
+    customerController.js --> 5 funciones CRUD para clientes
+    public/index.html     --> dashboard HTML con fetch a la API
+
+
+======================================================================
+  7. DATOS IMPORTANTES PARA RESPONDER PREGUNTAS
+======================================================================
+
+Estas consultas sirven para verificar rápidamente que todo está bien
+antes de la sustentación. Ejecutarlas en DBeaver:
+
+  -- ¿Las FK funcionan? (no debe dar error)
+  SELECT p.name, c.name, s.name
+  FROM Products p
+  INNER JOIN Categories c ON p.category_id = c.id
+  INNER JOIN Suppliers s ON p.supplier_id = s.id;
+
+  -- ¿Hay productos sin categoría o sin proveedor? (debe dar 0)
+  SELECT COUNT(*) AS huerfanos
+  FROM Products p
+  LEFT JOIN Categories c ON p.category_id = c.id
+  LEFT JOIN Suppliers s ON p.supplier_id = s.id
+  WHERE c.id IS NULL OR s.id IS NULL;
+
+  -- ¿Los emails de clientes son únicos? (debe dar 13 = total clientes)
+  SELECT COUNT(DISTINCT email) AS emails_unicos FROM Customers;
+
+  -- ¿Los SKU de productos son únicos? (debe dar 21)
+  SELECT COUNT(DISTINCT sku) AS skus_unicos FROM Products;
+
+  Datos clave para responder preguntas:
+  - Total de registros: 5 categorías, 10 proveedores, 13 clientes, 21 productos
+  - Los datos vienen de 103 filas del CSV (muchas repetidas por transacción)
+  - Se normalizaron en 3FN: cada dato único en su propia tabla
+  - Products tiene 2 FK: category_id y supplier_id
+  - El frontend usa fetch() para llamar a la API REST
+  - Express sirve archivos estáticos (index.html) y rutas de API
+  - Cada controller tiene 5 funciones: getAll, getById, create, update, remove
+  - El pool de MySQL se crea una vez y se reutiliza en todos los controllers
+
+  Normalización que se hizo:
+    CSV plano (103 filas con datos repetidos)
+        --> Categories  (5 únicos)
+        --> Suppliers    (10 únicos)
+        --> Customers    (13 únicos)
+        --> Products     (21 únicos, con FK a Categories y Suppliers)
+
+
+======================================================================
+  8. ORDEN DE LA SUSTENTACIÓN (10 minutos)
+======================================================================
+
+  Minuto 0-1:  Presentar el proyecto (qué es MegaStore, qué tecnologías)
+  Minuto 1-3:  Mostrar el diagrama (Der.drawio.html) y explicar las tablas
+  Minuto 3-5:  Abrir DBeaver, ejecutar 3-4 consultas SQL clave:
+               - Contar registros (4.2)
+               - Productos con JOIN (4.6)
+               - Productos por categoría (4.7)
+               - Producto más caro/barato (4.9)
+  Minuto 5-7:  Abrir http://localhost:3000, mostrar:
+               - Tabla de productos
+               - Crear un producto nuevo
+               - Editar un producto
+               - Borrar un producto
+               - Cambiar a otra sección (categorías, clientes)
+  Minuto 7-9:  Explicar brevemente el código:
+               - index.js (rutas)
+               - productController.js (ejemplo de CRUD)
+               - migrate.js (lectura del CSV)
+  Minuto 9-10: Responder preguntas
